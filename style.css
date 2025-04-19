@@ -102,3 +102,42 @@ ul li span{
 ul li span:hover{
     background: #edeef0;
 }
+nav .logo img{
+    width: 250px;
+    height: 250px;
+    
+}
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    margin-top: 2px;
+}
+/* nav ul li {
+    list-style-type: none;
+    display: inline;
+    border: 1px solid white;
+    border-radius: 5px;
+    padding: 5px 10px;
+    user-select:none;
+    cursor: pointer;
+    border-radius: 80%;
+
+    
+} */
+/* nav ul li a{
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+
+} */
+/* nav ul li a:hover{
+    background-color: #ff5945;
+    transition: 0.3s;
+    border-radius: 5px;} */
+
+.sign-in-up button{
+    font-weight: bold;
+    margin: 5px;
+}
