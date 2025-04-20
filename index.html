@@ -7,12 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        // Initialize EmailJS with the public key
-        (function() {
-            emailjs.init("G_MLep089y7P8rclq");
-        })();
-    </script>
+    <!-- EmailJS initialization moved to the main script after variables are defined -->
     <style>
         .auth-required {
             text-align: center;
@@ -167,12 +162,17 @@
             z-index: 1000;
             display: none;
         }
+        .test-email-btn {
+            background-color: #2196F3;
+            margin-top: 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
+    <!-- <div class="header">
         
-    </div>
+    </div> -->
     
     <div class="container">
         <nav>
@@ -245,6 +245,8 @@
                         <button type="submit">Schedule Task</button>
                     </form>
                     
+                    <button id="test-email-btn" class="schedule-btn test-email-btn">Test Email Reminder</button>
+                    
                     <div class="scheduled-tasks">
                         <h3>Scheduled Tasks</h3>
                         <div id="scheduled-tasks-list">
@@ -260,6 +262,23 @@
     <div id="toast" class="toast"></div>
 
 <script>
+    // EmailJS Configuration - must be defined before being used
+    const EMAILJS_PUBLIC_KEY = "G_MLep089y7P8rclq";
+    const EMAILJS_SERVICE_ID = "service_0v128ae";
+    const EMAILJS_TEMPLATE_ID = "template_pesvo1m";
+    
+    // Initialize EmailJS
+    (function() {
+        try {
+            emailjs.init(EMAILJS_PUBLIC_KEY);
+            console.log("EmailJS initialized successfully with key:", EMAILJS_PUBLIC_KEY);
+            console.log("Using service ID:", EMAILJS_SERVICE_ID);
+            console.log("Using template ID:", EMAILJS_TEMPLATE_ID);
+        } catch (error) {
+            console.error("Error initializing EmailJS:", error);
+        }
+    })();
+
     // User authentication check
     function checkAuth() {
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -317,6 +336,35 @@
         }, 3000);
     }
     
+    // Added test email button event listener
+    document.getElementById('test-email-btn').addEventListener('click', function() {
+        const userEmail = localStorage.getItem('currentUser');
+        
+        if (!userEmail) {
+            showToast('You must be logged in to test email', 'error');
+            return;
+        }
+        
+        // Send test email directly using EmailJS with only the required template variables
+        const templateParams = {
+            to_email: userEmail,
+            task: 'Test Task',
+            datetime: new Date().toLocaleString()
+        };
+        
+        console.log("Sending test email with params:", templateParams);
+        
+        // Send the email directly with correct service ID
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+            .then(function(response) {
+                console.log("Test email sent successfully:", response);
+                showToast('Test email sent successfully!', 'success');
+            }, function(error) {
+                console.error("Test email failed:", error);
+                showToast('Failed to send test email: ' + (error.text || error), 'error');
+            });
+    });
+    
     // Initialize tasks for logged in view
     function initializeLoggedTasks() {
         // Copy tasks from non-logged view or localStorage
@@ -368,41 +416,51 @@
         });
     }
     
-    // Send email reminder
+    // Send email reminder function fixed for EmailJS compatibility
     function sendEmailReminder(task, userEmail) {
-        // Get scheduled tasks
-        let scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
-        
-        // Find the task in our array
-        const taskIndex = scheduledTasks.findIndex(t => t.id === task.id);
-        
-        // If task no longer exists, exit
-        if (taskIndex === -1) return;
-        
-        // Format the date/time for the email
-        const taskDate = new Date(task.time);
-        const formattedDate = taskDate.toLocaleString();
-        
-        // Prepare template parameters
-        const templateParams = {
-            to_email: userEmail,
-            task: task.task,
-            datetime: formattedDate
-        };
-        
-        // Send the email
-        emailjs.send("service_pq3c4gu", "template_pesvo1m", templateParams)
-            .then(function(response) {
-                console.log("Email sent successfully:", response);
-                showToast(`Email reminder sent for "${task.task}"`, 'success');
-                
-                // Mark the task as having had a reminder sent
-                scheduledTasks[taskIndex].reminderSent = true;
-                localStorage.setItem('scheduledTasks', JSON.stringify(scheduledTasks));
-            }, function(error) {
-                console.log("Email failed to send:", error);
-                showToast("Failed to send email reminder", 'error');
-            });
+        try {
+            // Get scheduled tasks
+            let scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
+            
+            // Find the task in our array
+            const taskIndex = scheduledTasks.findIndex(t => t.id === task.id);
+            
+            // If task no longer exists, exit
+            if (taskIndex === -1) return;
+            
+            // Format the date/time for the email
+            const taskDate = new Date(task.time);
+            const formattedDate = taskDate.toLocaleString();
+            
+            // Prepare template parameters - using only the exact variables in the template
+            const templateParams = {
+                to_email: userEmail,
+                task: task.task,
+                datetime: formattedDate
+            };
+            
+            console.log("Sending email with parameters:", templateParams);
+            
+            // Send the email
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                .then(function(response) {
+                    console.log("Email sent successfully:", response);
+                    showToast(`Email reminder sent for "${task.task}"`, 'success');
+                    
+                    // Mark the task as having had a reminder sent
+                    scheduledTasks[taskIndex].reminderSent = true;
+                    localStorage.setItem('scheduledTasks', JSON.stringify(scheduledTasks));
+                    
+                    // Refresh the display
+                    displayScheduledTasks();
+                }, function(error) {
+                    console.error("Email failed to send:", error);
+                    showToast(`Failed to send email: ${error.text || 'Unknown error'}`, 'error');
+                });
+        } catch (err) {
+            console.error("Error in sendEmailReminder:", err);
+            showToast(`Error: ${err.message}`, 'error');
+        }
     }
     
     // Schedule button click handler
