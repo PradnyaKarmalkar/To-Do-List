@@ -8,10 +8,8 @@
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
-        // Load environment variables from .env file (this would normally be done on the server side)
-        // For client-side, we'll directly use the key here
+        // Initialize EmailJS with the public key
         (function() {
-            // Initialize EmailJS with the public key
             emailjs.init("G_MLep089y7P8rclq");
         })();
     </script>
@@ -262,10 +260,6 @@
     <div id="toast" class="toast"></div>
 
 <script>
-    // EmailJS configuration
-    const EMAILJS_SERVICE_ID = "service_pq3c4gu"; // Your EmailJS service ID
-    const EMAILJS_TEMPLATE_ID = "template_pesvo1m"; // Your EmailJS template ID
-
     // User authentication check
     function checkAuth() {
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -397,7 +391,7 @@
         };
         
         // Send the email
-        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+        emailjs.send("service_pq3c4gu", "template_pesvo1m", templateParams)
             .then(function(response) {
                 console.log("Email sent successfully:", response);
                 showToast(`Email reminder sent for "${task.task}"`, 'success');
