@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskNest - Sign Up</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .form-container {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            margin: 100px auto 20px;
+            padding: 40px 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .form-container h2 {
+            color: #002765;
+            margin-bottom: 30px;
+        }
+        .form-input {
+            display: flex;
+            align-items: center;
+            background: #edeef0;
+            border-radius: 30px;
+            padding-left: 20px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 15px 10px;
+        }
+        .form-container button {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .form-footer {
+            margin-top: 20px;
+            color: #fff;
+            text-align: center;
+        }
+        .form-footer a {
+            color: #ff5945;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <div class="logo"><img src="logo2.png" alt="TaskNest Logo"></div>
+            <div class="sign-in-up">
+                <a href="index.html"><button>Home</button></a>
+            </div>
+        </nav>
+
+        <div class="form-container">
+            <h2>Create an Account</h2>
+            <form id="signup-form">
+                <div class="form-input">
+                    <input type="text" id="fullname" placeholder="Full Name" required>
+                </div>
+                <div class="form-input">
+                    <input type="email" id="email" placeholder="Email" required>
+                </div>
+                <div class="form-input">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <div class="form-input">
+                    <input type="password" id="confirm-password" placeholder="Confirm Password" required>
+                </div>
+                <button type="submit">Sign Up</button>
+            </form>
+            <div class="form-footer">
+                <p>Already have an account? <a href="signin.html">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (password !== confirmPassword) {
+                alert("Passwords don't match!");
+                return;
+            }
+            
+            // Add user registration logic here
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html> 
