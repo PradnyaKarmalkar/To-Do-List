@@ -5,7 +5,171 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskNest - To-Do List</title>
     <link rel="stylesheet" href="style.css">
-    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        // Load environment variables from .env file (this would normally be done on the server side)
+        // For client-side, we'll directly use the key here
+        (function() {
+            // Initialize EmailJS with the public key
+            emailjs.init("G_MLep089y7P8rclq");
+        })();
+    </script>
+    <style>
+        .auth-required {
+            text-align: center;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .auth-required a {
+            color: #ff5945;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .schedule-container {
+            width: 100%;
+            max-width: 540px;
+            background: #fff;
+            margin: 100px auto 20px;
+            padding: 40px 30px 70px;
+            border-radius: 10px;
+        }
+        .schedule-container h2 {
+            color: #002765;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .schedule-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #edeef0;
+            border-radius: 30px;
+            padding-left: 20px;
+            margin-bottom: 25px;
+        }
+        .datetime-input {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+        .datetime-input label {
+            margin-bottom: 10px;
+            color: #002765;
+        }
+        .datetime-input input {
+            padding: 10px;
+            border-radius: 30px;
+            border: 1px solid #edeef0;
+            background: #edeef0;
+        }
+        .scheduled-tasks {
+            margin-top: 20px;
+        }
+        .scheduled-task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #edeef0;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .task-info {
+            flex: 1;
+        }
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .task-actions button {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .logout-btn {
+            background-color: #002765;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .username-display {
+            color: white;
+            margin-right: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .schedule-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 16px 50px;
+            background-color: #002765;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 40px;
+        }
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .side-by-side {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .side-by-side .to-do-list, 
+        .side-by-side .schedule-container {
+            margin: 20px 0;
+            flex: 1;
+            min-width: 300px;
+        }
+        @media (max-width: 900px) {
+            .side-by-side {
+                flex-direction: column;
+            }
+        }
+        .reminder-options {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+        .reminder-options label {
+            margin-bottom: 10px;
+            color: #002765;
+        }
+        .reminder-options select {
+            padding: 10px;
+            border-radius: 30px;
+            border: 1px solid #edeef0;
+            background: #edeef0;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
@@ -17,27 +181,509 @@
             <div class="logo"><img src="logo2.png" alt="TaskNest Logo"></div>
                         
             <div class="sign-in-up">
-                <a href="signin.html"><button>Sign In</button></a>
-                <a href="signup.html"><button>Sign Up</button></a>                 
+                <div id="auth-section">
+                    <a href="signin.html"><button>Sign In</button></a>
+                    <a href="signup.html"><button>Sign Up</button></a>
+                </div>
+                <div id="user-section" style="display: none;">
+                    <span class="username-display" id="username"></span>
+                    <button class="logout-btn" id="logout-btn">Logout</button>
+                </div>                
             </div>       
         </nav>
-        
 
-        <div class="to-do-list">
-            <h2>To-Do List <img src="icon.png" alt="to-di-img"></h2>
-            <div class="row">
-                <input type="text" id="input-box" placeholder="Add your text">
-                <button onclick="addTask()">Add</button>
+        <div class="main-content">
+            <!-- For non-logged in users -->
+            <div id="non-logged-content">
+                <div class="to-do-list">
+                    <h2>To-Do List <img src="icon.png" alt="to-di-img"></h2>
+                    <div class="row">
+                        <input type="text" id="input-box" placeholder="Add your text">
+                        <button onclick="addTask()">Add</button>
+                    </div>
+                    <ul id="list-container">
+                        <!-- <li class="checked">Task 1</li>
+                        <li>Task 2</li>
+                        <li>Task 3</li> -->
+                    </ul>
+                    
+                    <button id="schedule-btn" class="schedule-btn">Schedule Your Task</button>
+                </div>
             </div>
-            <ul id="list-container">
-                <!-- <li class="checked">Task 1</li>
-                <li>Task 2</li>
-                <li>Task 3</li> -->
-            </ul>
 
+            <!-- For logged in users -->
+            <div id="logged-content" class="side-by-side" style="display: none;">
+                <div class="to-do-list">
+                    <h2>To-Do List <img src="icon.png" alt="to-di-img"></h2>
+                    <div class="row">
+                        <input type="text" id="input-box-logged" placeholder="Add your text">
+                        <button onclick="addTaskLogged()">Add</button>
+                    </div>
+                    <ul id="list-container-logged">
+                        <!-- Tasks will be dynamically added here -->
+                    </ul>
+                </div>
+
+                <div id="schedule-container" class="schedule-container">
+                    <h2>Schedule Tasks</h2>
+                    <form id="schedule-form">
+                        <div class="schedule-row">
+                            <input type="text" id="task-name" placeholder="Task name" required>
+                        </div>
+                        <div class="datetime-input">
+                            <label for="task-datetime">Schedule for:</label>
+                            <input type="datetime-local" id="task-datetime" required>
+                        </div>
+                        <div class="reminder-options">
+                            <label for="reminder-time">Email reminder:</label>
+                            <select id="reminder-time">
+                                <option value="5">5 minutes before</option>
+                                <option value="10">10 minutes before</option>
+                                <option value="15">15 minutes before</option>
+                                <option value="30">30 minutes before</option>
+                                <option value="60">1 hour before</option>
+                            </select>
+                        </div>
+                        <button type="submit">Schedule Task</button>
+                    </form>
+                    
+                    <div class="scheduled-tasks">
+                        <h3>Scheduled Tasks</h3>
+                        <div id="scheduled-tasks-list">
+                            <!-- Scheduled tasks will be listed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
     </div>
-<script src="script.js"></script>    
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+<script>
+    // EmailJS configuration
+    const EMAILJS_SERVICE_ID = "service_id"; // Replace with your actual service ID
+    const EMAILJS_TEMPLATE_ID = "template_id"; // Replace with your actual template ID
+
+    // User authentication check
+    function checkAuth() {
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const authSection = document.getElementById('auth-section');
+        const userSection = document.getElementById('user-section');
+        const nonLoggedContent = document.getElementById('non-logged-content');
+        const loggedContent = document.getElementById('logged-content');
+        const username = document.getElementById('username');
+        
+        if (isLoggedIn) {
+            // UI elements for logged in users
+            authSection.style.display = 'none';
+            userSection.style.display = 'flex';
+            nonLoggedContent.style.display = 'none';
+            loggedContent.style.display = 'flex';
+            
+            // Display current user
+            const currentUser = localStorage.getItem('currentUser');
+            username.textContent = currentUser;
+            
+            // Initialize tasks for logged in view
+            initializeLoggedTasks();
+            
+            // Initialize email reminders for scheduled tasks
+            initializeEmailReminders();
+        } else {
+            // UI elements for non-logged in users
+            authSection.style.display = 'block';
+            userSection.style.display = 'none';
+            nonLoggedContent.style.display = 'block';
+            loggedContent.style.display = 'none';
+        }
+    }
+    
+    // Toast notification function
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        
+        // Set color based on type
+        if (type === 'success') {
+            toast.style.backgroundColor = '#4CAF50';
+        } else if (type === 'error') {
+            toast.style.backgroundColor = '#F44336';
+        } else if (type === 'info') {
+            toast.style.backgroundColor = '#2196F3';
+        }
+        
+        // Show toast
+        toast.style.display = 'block';
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+    
+    // Initialize tasks for logged in view
+    function initializeLoggedTasks() {
+        // Copy tasks from non-logged view or localStorage
+        const nonLoggedTasks = document.getElementById('list-container');
+        const loggedTasks = document.getElementById('list-container-logged');
+        
+        // If we have tasks in localStorage, use those
+        const savedTasks = localStorage.getItem('data');
+        if (savedTasks) {
+            loggedTasks.innerHTML = savedTasks;
+        } else if (nonLoggedTasks.innerHTML.trim() !== '') {
+            // Otherwise copy from non-logged view if it has content
+            loggedTasks.innerHTML = nonLoggedTasks.innerHTML;
+        }
+        
+        // Display scheduled tasks
+        displayScheduledTasks();
+    }
+    
+    // Initialize email reminders for scheduled tasks
+    function initializeEmailReminders() {
+        const scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
+        const currentUser = localStorage.getItem('currentUser');
+        
+        // Only proceed if we have tasks and a current user
+        if (!scheduledTasks.length || !currentUser) return;
+        
+        const now = new Date();
+        
+        scheduledTasks.forEach(task => {
+            // Skip tasks that already have reminders scheduled or are in the past
+            if (task.reminderSent || new Date(task.time) < now) return;
+            
+            // Calculate reminder time
+            const taskTime = new Date(task.time);
+            const reminderTime = new Date(taskTime.getTime() - (task.reminderMinutes * 60 * 1000));
+            
+            // If reminder time is in the future, schedule it
+            if (reminderTime > now) {
+                const timeUntilReminder = reminderTime.getTime() - now.getTime();
+                
+                // Schedule reminder
+                setTimeout(() => {
+                    sendEmailReminder(task, currentUser);
+                }, timeUntilReminder);
+                
+                console.log(`Email reminder scheduled for "${task.task}" in ${Math.round(timeUntilReminder/60000)} minutes`);
+            }
+        });
+    }
+    
+    // Send email reminder
+    function sendEmailReminder(task, userEmail) {
+        // Get scheduled tasks
+        let scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
+        
+        // Find the task in our array
+        const taskIndex = scheduledTasks.findIndex(t => t.id === task.id);
+        
+        // If task no longer exists, exit
+        if (taskIndex === -1) return;
+        
+        // Format the date/time for the email
+        const taskDate = new Date(task.time);
+        const formattedDate = taskDate.toLocaleString();
+        
+        // Prepare template parameters
+        const templateParams = {
+            to_email: userEmail,
+            task: task.task,
+            datetime: formattedDate
+        };
+        
+        // Send the email
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+            .then(function(response) {
+                console.log("Email sent successfully:", response);
+                showToast(`Email reminder sent for "${task.task}"`, 'success');
+                
+                // Mark the task as having had a reminder sent
+                scheduledTasks[taskIndex].reminderSent = true;
+                localStorage.setItem('scheduledTasks', JSON.stringify(scheduledTasks));
+            }, function(error) {
+                console.log("Email failed to send:", error);
+                showToast("Failed to send email reminder", 'error');
+            });
+    }
+    
+    // Schedule button click handler
+    document.getElementById('schedule-btn').addEventListener('click', function() {
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn) {
+            // If user is not logged in, show login message
+            alert('You should login for this feature');
+        }
+    });
+    
+    // Add task function for logged in view
+    function addTaskLogged() {
+        const inputBox = document.getElementById("input-box-logged");
+        const listContainer = document.getElementById("list-container-logged");
+        
+        if(inputBox.value === ''){
+            alert("You must write something!");
+        }
+        else{
+            let li = document.createElement("li");
+            li.innerHTML = inputBox.value;
+            listContainer.appendChild(li);
+            let span = document.createElement("span");
+            span.innerHTML = "\u00d7";
+            li.appendChild(span);
+        }
+        inputBox.value = '';
+        saveData();
+    }
+    
+    // Ensure the task click functionality works for both views
+    document.addEventListener("click", function(e) {
+        if(e.target.tagName === "LI"){
+            e.target.classList.toggle("checked");
+            saveData();
+        }
+        else if(e.target.tagName === "SPAN"){
+            e.target.parentElement.remove();
+            saveData();
+        }
+    }, false);
+    
+    // Logout function
+    document.getElementById('logout-btn').addEventListener('click', function() {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('currentUser');
+        
+        checkAuth();
+    });
+    
+    // Task scheduling
+    document.getElementById('schedule-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const taskName = document.getElementById('task-name').value;
+        const taskDateTime = document.getElementById('task-datetime').value;
+        const reminderMinutes = parseInt(document.getElementById('reminder-time').value);
+        const userEmail = localStorage.getItem('currentUser');
+        
+        if (!taskName || !taskDateTime) {
+            alert('Please fill in all fields');
+            return;
+        }
+        
+        // Get existing scheduled tasks or create empty array
+        let scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
+        
+        // Add new task
+        const newTask = {
+            id: Date.now(),
+            task: taskName,
+            time: taskDateTime,
+            reminderMinutes: reminderMinutes,
+            reminderSent: false,
+            completed: false
+        };
+        
+        scheduledTasks.push(newTask);
+        
+        // Save to localStorage
+        localStorage.setItem('scheduledTasks', JSON.stringify(scheduledTasks));
+        
+        // Reset form
+        document.getElementById('task-name').value = '';
+        document.getElementById('task-datetime').value = '';
+        
+        // Refresh task list
+        displayScheduledTasks();
+        
+        // Schedule the email reminder
+        const taskTime = new Date(taskDateTime);
+        const reminderTime = new Date(taskTime.getTime() - (reminderMinutes * 60 * 1000));
+        const now = new Date();
+        
+        if (reminderTime > now) {
+            const timeUntilReminder = reminderTime.getTime() - now.getTime();
+            
+            // Schedule reminder
+            setTimeout(() => {
+                sendEmailReminder(newTask, userEmail);
+            }, timeUntilReminder);
+            
+            showToast(`Task scheduled with email reminder ${reminderMinutes} minutes before`, 'success');
+        } else {
+            showToast('Task scheduled successfully, but reminder time is in the past', 'info');
+        }
+    });
+    
+    // Display scheduled tasks
+    function displayScheduledTasks() {
+        const scheduledTasksList = document.getElementById('scheduled-tasks-list');
+        const scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
+        
+        // Clear existing list
+        scheduledTasksList.innerHTML = '';
+        
+        if (scheduledTasks.length === 0) {
+            scheduledTasksList.innerHTML = '<p>No scheduled tasks</p>';
+            return;
+        }
+        
+        // Sort tasks by date
+        scheduledTasks.sort((a, b) => new Date(a.time) - new Date(b.time));
+        
+        // Display each task
+        scheduledTasks.forEach(task => {
+            const taskElement = document.createElement('div');
+            taskElement.classList.add('scheduled-task');
+            
+            // Format date for display
+            const taskDate = new Date(task.time);
+            const formattedDate = taskDate.toLocaleString();
+            
+            // Add reminder information
+            const reminderStatus = task.reminderSent ? 
+                '<span style="color: green;">✓ Reminder sent</span>' : 
+                `<span>⏰ Reminder: ${task.reminderMinutes} min before</span>`;
+            
+            taskElement.innerHTML = `
+                <div class="task-info">
+                    <strong>${task.task}</strong>
+                    <p>Scheduled for: ${formattedDate}</p>
+                    <p>${reminderStatus}</p>
+                </div>
+                <div class="task-actions">
+                    <button onclick="editTask(${task.id})">Edit</button>
+                    <button onclick="deleteTask(${task.id})">Delete</button>
+                </div>
+            `;
+            
+            scheduledTasksList.appendChild(taskElement);
+        });
+    }
+    
+    // Edit scheduled task
+    function editTask(taskId) {
+        const scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
+        const task = scheduledTasks.find(t => t.id === taskId);
+        
+        if (!task) return;
+        
+        // Format datetime for input
+        const dateObj = new Date(task.time);
+        const localDateTime = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16);
+        
+        document.getElementById('task-name').value = task.task;
+        document.getElementById('task-datetime').value = localDateTime;
+        
+        // Set reminder time if exists
+        if (task.reminderMinutes) {
+            const reminderSelect = document.getElementById('reminder-time');
+            for (let i = 0; i < reminderSelect.options.length; i++) {
+                if (parseInt(reminderSelect.options[i].value) === task.reminderMinutes) {
+                    reminderSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        // Remove the task
+        deleteTask(taskId, false);
+        
+        // Focus on form
+        document.getElementById('task-name').focus();
+    }
+    
+    // Delete scheduled task
+    function deleteTask(taskId, showAlert = true) {
+        let scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
+        
+        scheduledTasks = scheduledTasks.filter(task => task.id !== taskId);
+        
+        localStorage.setItem('scheduledTasks', JSON.stringify(scheduledTasks));
+        
+        displayScheduledTasks();
+        
+        if (showAlert) {
+            showToast('Task deleted', 'info');
+        }
+    }
+    
+    // Check for task reminders
+    function checkReminders() {
+        if (localStorage.getItem('isLoggedIn') !== 'true') return;
+        
+        const scheduledTasks = JSON.parse(localStorage.getItem('scheduledTasks')) || [];
+        const now = new Date();
+        
+        scheduledTasks.forEach(task => {
+            const taskTime = new Date(task.time);
+            
+            // If the task is due (within the last minute)
+            if (!task.completed && 
+                taskTime <= now && 
+                taskTime >= new Date(now - 60000)) {
+                
+                // Mark task as completed
+                task.completed = true;
+                
+                // Show notification
+                showToast(`It's time for "${task.task}"`, 'info');
+                
+                // Request permission for browser notifications
+                if (Notification.permission === "granted") {
+                    new Notification("TaskNest Reminder", {
+                        body: `It's time for "${task.task}"`,
+                        icon: "icon.png"
+                    });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification("TaskNest Reminder", {
+                                body: `It's time for "${task.task}"`,
+                                icon: "icon.png"
+                            });
+                        }
+                    });
+                }
+            }
+        });
+        
+        // Save updated tasks
+        localStorage.setItem('scheduledTasks', JSON.stringify(scheduledTasks));
+    }
+    
+    // For regular to-do list
+    function saveData() {
+        const listContainer = localStorage.getItem('isLoggedIn') === 'true' ? 
+            document.getElementById("list-container-logged") : 
+            document.getElementById("list-container");
+        localStorage.setItem("data", listContainer.innerHTML);
+    }
+    
+    function showTask() {
+        const listContainer = document.getElementById("list-container");
+        listContainer.innerHTML = localStorage.getItem("data") || '';
+    }
+    
+    // Initialize the app
+    window.onload = function() {
+        checkAuth();
+        showTask();
+        
+        // Check for reminders every minute
+        setInterval(checkReminders, 60000);
+        
+        // Also check immediately on load
+        checkReminders();
+    };
+</script>
+
+<script src="script.js"></script>
 </body>
 </html>

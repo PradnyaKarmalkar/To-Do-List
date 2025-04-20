@@ -14,6 +14,7 @@
             padding: 40px 30px;
             border-radius: 10px;
             text-align: center;
+            margin-top: auto;
         }
         .form-container h2 {
             color: #002765;
@@ -81,8 +82,15 @@
     </div>
 
     <script>
+        // Check if user is already logged in
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            window.location.href = 'index.html';
+        }
+        
         document.getElementById('signup-form').addEventListener('submit', function(e) {
             e.preventDefault();
+            const fullname = document.getElementById('fullname').value;
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
             
@@ -91,7 +99,30 @@
                 return;
             }
             
-            // Add user registration logic here
+            // Get existing users or create empty array
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+            
+            // Check if user already exists
+            if (users.some(user => user.email === email)) {
+                alert('User with this email already exists');
+                return;
+            }
+            
+            // Add new user
+            users.push({
+                fullname,
+                email,
+                password
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            // Set login flag
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUser', email);
+            
+            // Redirect to home page
             window.location.href = 'index.html';
         });
     </script>
