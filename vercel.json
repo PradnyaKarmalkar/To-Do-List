@@ -1,0 +1,21 @@
+{
+  "name": "tasknest",
+  "version": 2,
+  "builds": [
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "EMAILJS_PUBLIC_KEY": "G_MLep089y7P8rclq",
+    "EMAILJS_SERVICE_ID": "service_pq3c4gu",
+    "EMAILJS_TEMPLATE_ID": "template_pesvo1m"
+  }
+} 
