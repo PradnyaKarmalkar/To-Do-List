@@ -67,7 +67,7 @@ Simply open the `index.html` file in your web browser to run the application.
 
 ## Deployment
 
-The application is deployed on Vercel. Visit [TaskNest App](https://tasknest.vercel.app) to use the application.
+The application is deployed on Vercel. Visit [TaskNest App](https://tasknest-green.vercel.app/) to use the application.
 
 ## License
 
